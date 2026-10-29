@@ -436,10 +436,27 @@ async function sendMail({ to, subject, html, text, from, replyTo, refId }) {
         throw e;
       }
 
+      // ข้อความจริงจาก SendGrid — ต้องแนบไปด้วยเสมอ
+      // 401 ของ SendGrid มีได้หลายสาเหตุที่หน้าตาเหมือนกัน ถ้าแปลเป็นข้อความเดียว
+      // จะซ่อนสาเหตุจริงจนแก้ผิดจุด (เคยเกิดแล้ว: trial หมดอายุแต่ขึ้นว่าคีย์ผิด)
+      let raw = '';
+      try { raw = (JSON.parse(t).errors || []).map(x => x.message).join(' · '); } catch (e) { raw = t; }
+      raw = String(raw || '').slice(0, 240);
+
+      // เครดิตหมด — มักเกิดเมื่อ Free Trial 60 วันสิ้นสุดแล้วยังไม่ได้เลือกแพ็กเกจ
+      if (r.status === 401 && /credits? exceeded|maximum credits/i.test(raw)) {
+        const e = new Error('บัญชี SendGrid หมดเครดิตส่งเมล');
+        e.hint = 'มักเกิดเมื่อ Free Trial ของ SendGrid ครบกำหนด ' +
+                 'เข้า SendGrid → Settings → Plan & Billing แล้วเลือกแพ็กเกจ Free (100 ฉบับ/วัน) ' +
+                 '— ข้อความจาก SendGrid: ' + raw;
+        throw e;
+      }
+
       if (r.status === 401) {
         const e = new Error('SendGrid ปฏิเสธคีย์ที่ใช้');
         e.hint = 'ตรวจว่า SENDGRID_API_KEY ถูกต้องและยังไม่ถูกลบ ' +
-                 'คีย์ต้องมีสิทธิ์ Mail Send เป็นอย่างน้อย';
+                 'คีย์ต้องมีสิทธิ์ Mail Send เป็นอย่างน้อย' +
+                 (raw ? ' — ข้อความจาก SendGrid: ' + raw : '');
         throw e;
       }
 
