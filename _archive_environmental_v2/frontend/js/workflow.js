@@ -2989,7 +2989,9 @@ const GRID_SCHEMAS = {
   },
   WTS_03: {
     subjects: [{ key: 'location_name', label: 'สถานที่/หน่วยงาน', width: '' }],
-    results: [{ key: 'bacteria_count', label: 'ผลเพาะเชื้อ', type: 'growth', width: 'w-56' }]
+    // ผลเพาะเชื้อของงานน้ำ/พื้นผิวคือ "ชื่อเชื้อที่เพาะขึ้น" ไม่ใช่แค่ Growth/No growth
+    // จึงต้องพิมพ์เองได้ — type culture = ช่องข้อความ + รายการแนะนำให้กดเลือกค่าที่ใช้บ่อย
+    results: [{ key: 'bacteria_count', label: 'ผลเพาะเชื้อ', type: 'culture', width: 'w-72', placeholder: 'No growth after 3 day หรือพิมพ์ชื่อเชื้อ' }]
   },
   FOD_06: {
     subjects: [{ key: 'location_name', label: 'อาหาร', width: '' }],
@@ -3024,6 +3026,14 @@ function getGridSchema(serviceCode) {
 /** สร้างช่องกรอกผลตามชนิดของฟิลด์ (ตัวเลข CFU หรือ Growth/No growth) */
 function buildGridField(field, value) {
   const v = (value === undefined || value === null || value === '-') ? '' : String(value);
+
+  // ช่องผลเพาะเชื้อแบบพิมพ์เอง — มี datalist ให้กดเลือกค่าที่ใช้บ่อยได้ด้วย
+  // ใช้ data-field ชื่อเดิม (bacteria_count) ฟังก์ชันบันทึกจึงอ่านค่าได้โดยไม่ต้องแก้เพิ่ม
+  if (field.type === 'culture') {
+    return '<input type="text" data-field="' + field.key + '" value="' + v.replace(/"/g, '&quot;') + '"'
+      + ' list="culture-result-options" placeholder="' + (field.placeholder || '') + '"'
+      + ' class="grid-input w-full px-2.5 py-1.5 border border-emerald-300 rounded-lg text-xs text-emerald-950 font-medium">';
+  }
 
   if (field.type === 'growth' || field.type === 'negative') {
     const isGrowth = /^(growth|พบเชื้อ|fail)/i.test(v);

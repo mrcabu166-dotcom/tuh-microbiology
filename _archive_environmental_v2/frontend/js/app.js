@@ -478,7 +478,9 @@ async function previewReportModal(reportId) {
     `;
     itemsHtml = items.map((it, idx) => {
       const loc = it.location_name || it.sample_description || it.ward_name || `จุดตรวจที่ ${idx + 1}`;
-      const culture = isPending ? 'รอตรวจ' : (it.culture_result || 'No growth after 3 day');
+      // อ่านจาก bacteria_count ซึ่งเป็นที่เก็บจริง (ดูคำอธิบายใน report_view.html)
+      const cultureRaw = String(it.culture_result || it.bacteria_count || '').trim();
+      const culture = isPending ? 'รอตรวจ' : ((cultureRaw && cultureRaw !== '-') ? cultureRaw : 'No growth after 3 day');
       return `
         <tr class="border-b border-slate-100 text-xs">
           <td class="p-2 text-center text-slate-500 font-bold">${idx + 1}</td>

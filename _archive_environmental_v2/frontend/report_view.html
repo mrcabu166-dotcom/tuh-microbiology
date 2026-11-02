@@ -744,7 +744,11 @@
           tbody.innerHTML = items.map((it, idx) => {
             const loc = it.location_name || it.sample_description || it.ward_name || `จุดตรวจที่ ${idx + 1}`;
             const samplingDate = it.sampling_date || rep.sampling_date || rep.formatted_date || '11/08/2569';
-            const culture = isPending ? '⏳ รอตรวจ' : ((it.culture_result && it.culture_result !== '-') ? it.culture_result : 'No growth after 3 day');
+            // ผลเพาะเชื้อเก็บจริงในคอลัมน์ bacteria_count — culture_result ไม่มีอยู่ในตาราง report_items
+            // เดิมอ่านแต่ culture_result จึงได้ undefined แล้วตกไปใช้ค่าตายตัว "No growth after 3 day"
+            // ทำให้ใบรายงานแสดงว่าไม่พบเชื้อ ทั้งที่ผลจริงเป็นชื่อเชื้อที่เพาะขึ้น
+            const cultureRaw = String(it.culture_result || it.bacteria_count || '').trim();
+            const culture = isPending ? '⏳ รอตรวจ' : ((cultureRaw && cultureRaw !== '-') ? cultureRaw : 'No growth after 3 day');
             const itPass = ['pass', 'normal', 'no_growth', 'no growth after 3 day', 'ไม่พบเชื้อ'].includes(culture.toLowerCase()) || it.item_result === 'pass';
             const itWaiting = isPending || !it.item_result || String(it.item_result).toLowerCase() === 'pending';
             const isRowTested = !itWaiting && (isPass || it.item_result === 'tested' || it.item_result === 'pass');
