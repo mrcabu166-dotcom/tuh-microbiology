@@ -2976,6 +2976,20 @@ async function loadWaitingQueueIntoGrid() {
 // ทำให้งานน้ำ/พื้นผิว งานอาหาร และงานยา ต้องกรอก CFU ทั้งที่รายงานจริงเป็น
 // Growth / No growth ตามที่ผู้ใช้กรอกไว้ในแบบฟอร์มส่งตรวจ
 // ==============================================================================
+// งานน้ำ/พื้นผิว 3 บริการ — WTS-03 (ควบคุมโรคติดเชื้อ) · WTO-04 (ห้องผ่าตัด) · WTM-05 (ศูนย์การแพทย์)
+// ทั้งสามใช้ตารางลงผลชุดเดียวกัน และใบรายงานก็ใช้เทมเพลตเดียวกัน (report_view.html → isWaterSurface)
+//
+// ผลเพาะเชื้อของงานนี้คือ "ชื่อเชื้อที่เพาะขึ้น" ไม่ใช่แค่ Growth/No growth จึงต้องพิมพ์เองได้
+// type 'culture' = ช่องข้อความ + datalist ให้กดเลือกค่าที่ใช้บ่อย แต่ไม่บังคับให้เลือกจากรายการ
+//
+// แยกเป็น const เดียวแล้วอ้างทั้ง 3 บริการ เพื่อไม่ให้ซ้ำรอยเดิม: ก่อนหน้านี้แก้เฉพาะ WTS_03
+// ส่วน WTO_04/WTM_05 ไม่มีใน GRID_SCHEMAS เลย จึงตกไปใช้ schema ของ AIR_01 ซึ่งเป็นการนับโคโลนี
+// (Number of colonies Bacteria/Fungus) คนละหน่วยวัดกับงานเพาะเชื้อจากน้ำ
+const WATER_SURFACE_SCHEMA = {
+  subjects: [{ key: 'location_name', label: 'สถานที่/หน่วยงาน', width: '' }],
+  results: [{ key: 'bacteria_count', label: 'ผลเพาะเชื้อ', type: 'culture', width: 'w-72', placeholder: 'No growth after 3 day หรือพิมพ์ชื่อเชื้อ' }]
+};
+
 const GRID_SCHEMAS = {
   AIR_01: {
     subjects: [
@@ -2987,12 +3001,9 @@ const GRID_SCHEMAS = {
       { key: 'fungus_count', label: 'Number of colonies (Fungus)', type: 'text', width: 'w-32', placeholder: '0' }
     ]
   },
-  WTS_03: {
-    subjects: [{ key: 'location_name', label: 'สถานที่/หน่วยงาน', width: '' }],
-    // ผลเพาะเชื้อของงานน้ำ/พื้นผิวคือ "ชื่อเชื้อที่เพาะขึ้น" ไม่ใช่แค่ Growth/No growth
-    // จึงต้องพิมพ์เองได้ — type culture = ช่องข้อความ + รายการแนะนำให้กดเลือกค่าที่ใช้บ่อย
-    results: [{ key: 'bacteria_count', label: 'ผลเพาะเชื้อ', type: 'culture', width: 'w-72', placeholder: 'No growth after 3 day หรือพิมพ์ชื่อเชื้อ' }]
-  },
+  WTS_03: WATER_SURFACE_SCHEMA,
+  WTO_04: WATER_SURFACE_SCHEMA,
+  WTM_05: WATER_SURFACE_SCHEMA,
   FOD_06: {
     subjects: [{ key: 'location_name', label: 'อาหาร', width: '' }],
     results: [
