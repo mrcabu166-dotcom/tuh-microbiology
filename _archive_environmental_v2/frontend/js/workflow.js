@@ -10,6 +10,25 @@
  */
 
 // ==============================================================================
+// HTML ESCAPING
+// ==============================================================================
+// ค่าที่ผู้ใช้พิมพ์ถูกต่อเข้า HTML ตรง ๆ หลายจุดในไฟล์นี้ ถ้ามีเครื่องหมาย " ปนมา
+// attribute จะถูกปิดก่อนกำหนด แล้วข้อความที่เหลือกลายเป็น attribute จริงของ element
+//   ชื่อสถานที่  12" onfocus="alert(1)   →   value="12" onfocus="alert(1)"
+// ทั้งทำให้ช่องกรอกเพี้ยนและเปิดช่องให้ฝังสคริปต์ได้
+//
+// escape & ก่อน " เสมอ มิฉะนั้น &quot; ที่เพิ่งสร้างจะถูก escape ซ้ำเป็น &amp;quot;
+// ประกาศแบบ function declaration จึง hoist ใช้ได้ทั้งไฟล์ไม่ว่าจะเรียกจากบรรทัดไหน
+function escapeAttr(value) {
+  if (value === undefined || value === null) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// ==============================================================================
 // CONFIGURATION & API KEYS
 // ==============================================================================
 const WORKFLOW_CONFIG = {
@@ -166,7 +185,7 @@ function ensureDrugDatalist() {
   if (document.getElementById('drug-sample-list')) return;
   const dl = document.createElement('datalist');
   dl.id = 'drug-sample-list';
-  dl.innerHTML = DRUG_SAMPLE_LIST.map(d => '<option value="' + d + '"></option>').join('');
+  dl.innerHTML = DRUG_SAMPLE_LIST.map(d => '<option value="' + escapeAttr(d) + '"></option>').join('');
   document.body.appendChild(dl);
 }
 
@@ -216,7 +235,7 @@ function ensurePreparedMedicineDatalist() {
     document.body.appendChild(dl);
   }
   if (dl.children.length) return;   // เติมไว้แล้ว
-  dl.innerHTML = PREPARED_MEDICINE_LIST.map(d => '<option value="' + d + '"></option>').join('');
+  dl.innerHTML = PREPARED_MEDICINE_LIST.map(d => '<option value="' + escapeAttr(d) + '"></option>').join('');
 }
 
 /** เติมชื่อยาเตรียมลงทุกแถวตามลำดับในแบบฟอร์มกระดาษ */
@@ -2571,7 +2590,7 @@ const isDrugService = (rep) => DRUG_SERVICES.includes(String(rep && rep.service_
 
 const edField = (id, label, value, type) =>
   '<div><label class="block font-semibold text-slate-700 mb-1">' + label + '</label>'
-  + '<input type="' + (type || 'text') + '" id="' + id + '" value="' + String(value == null ? '' : value).replace(/"/g, '&quot;')
+  + '<input type="' + (type || 'text') + '" id="' + id + '" value="' + escapeAttr(value)
   + '" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs"></div>';
 
 /** ส่วน HTML ของช่องงานผลิตยา — คืนค่าว่างถ้าไม่ใช่บริการยา */
@@ -2654,16 +2673,16 @@ async function editReportRecord(reportId) {
     html:
       '<div class="text-left text-xs space-y-3 pt-1">'
       + '<div><label class="block font-semibold text-slate-700 mb-1">หน่วยงานส่งตรวจ</label>'
-      + '<input id="ed-dept" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs" value="' + (rep.department || '') + '"></div>'
+      + '<input id="ed-dept" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs" value="' + escapeAttr(rep.department) + '"></div>'
       + '<div><label class="block font-semibold text-slate-700 mb-1">สถานที่ / จุดเก็บตัวอย่าง</label>'
-      + '<input id="ed-ward" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs" value="' + (rep.ward_room || '') + '"></div>'
+      + '<input id="ed-ward" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs" value="' + escapeAttr(rep.ward_room) + '"></div>'
       + '<div><label class="block font-semibold text-slate-700 mb-1">ผู้เก็บตัวอย่าง / ผู้ส่งตรวจ</label>'
-      + '<input id="ed-sampler-name" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs" value="' + (rep.sampler_name || '') + '"></div>'
+      + '<input id="ed-sampler-name" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs" value="' + escapeAttr(rep.sampler_name) + '"></div>'
       + '<div><label class="block font-semibold text-slate-700 mb-1">อีเมลรับผลตรวจ <span class="font-normal text-slate-400">(ไม่บังคับ)</span></label>'
-      + '<input type="email" id="ed-recipient-email" placeholder="name@tu.ac.th" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs" value="' + (rep.recipient_email || '') + '"></div>'
+      + '<input type="email" id="ed-recipient-email" placeholder="name@tu.ac.th" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs" value="' + escapeAttr(rep.recipient_email) + '"></div>'
       + '<div class="grid grid-cols-2 gap-3">'
       + '<div><label class="block font-semibold text-slate-700 mb-1">วันที่เก็บตัวอย่าง</label>'
-      + '<input type="date" id="ed-sampling" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs" value="' + (rep.sampling_date || '') + '"></div>'
+      + '<input type="date" id="ed-sampling" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs" value="' + escapeAttr(rep.sampling_date) + '"></div>'
       + '<div><label class="block font-semibold text-slate-700 mb-1">สถานะ</label>'
       + '<select id="ed-status" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs">'
       + '<option value="pending"' + (waiting ? ' selected' : '') + '>⏳ รอตรวจ</option>'
@@ -3041,8 +3060,8 @@ function buildGridField(field, value) {
   // ช่องผลเพาะเชื้อแบบพิมพ์เอง — มี datalist ให้กดเลือกค่าที่ใช้บ่อยได้ด้วย
   // ใช้ data-field ชื่อเดิม (bacteria_count) ฟังก์ชันบันทึกจึงอ่านค่าได้โดยไม่ต้องแก้เพิ่ม
   if (field.type === 'culture') {
-    return '<input type="text" data-field="' + field.key + '" value="' + v.replace(/"/g, '&quot;') + '"'
-      + ' list="culture-result-options" placeholder="' + (field.placeholder || '') + '"'
+    return '<input type="text" data-field="' + field.key + '" value="' + escapeAttr(v) + '"'
+      + ' list="culture-result-options" placeholder="' + escapeAttr(field.placeholder) + '"'
       + ' class="grid-input w-full px-2.5 py-1.5 border border-emerald-300 rounded-lg text-xs text-emerald-950 font-medium">';
   }
 
@@ -3056,7 +3075,7 @@ function buildGridField(field, value) {
       + '</select>';
   }
 
-  return '<input type="text" data-field="' + field.key + '" value="' + v + '" placeholder="' + (field.placeholder || '') + '"'
+  return '<input type="text" data-field="' + field.key + '" value="' + escapeAttr(v) + '" placeholder="' + escapeAttr(field.placeholder) + '"'
     + ' class="grid-input w-full px-2.5 py-1.5 border border-emerald-300 rounded-lg font-mono text-center font-bold text-emerald-950 text-xs">';
 }
 
@@ -3137,13 +3156,13 @@ async function loadSubmissionIntoAdminGrid(reportId) {
   tbody.innerHTML = sorted.map((item, idx) => {
     const no = item.item_no || idx + 1;
     let row = '<tr class="border-b border-slate-200 hover:bg-[#f2f8f2]/50 text-xs transition"'
-      + ' data-item-idx="' + idx + '" data-item-id="' + (item.id || '') + '" data-item-no="' + no + '">'
+      + ' data-item-idx="' + idx + '" data-item-id="' + escapeAttr(item.id) + '" data-item-no="' + escapeAttr(no) + '">'
       + '<td class="p-2.5 text-center font-bold text-slate-500 bg-slate-50">' + no + '</td>';
 
     schema.subjects.forEach(c => {
       const fallback = (c.key === 'ward_name') ? (report.ward_room || report.department || '') : '';
       const val = item[c.key] || fallback;
-      row += '<td class="p-2.5"><input type="text" data-field="' + c.key + '" value="' + val + '"'
+      row += '<td class="p-2.5"><input type="text" data-field="' + c.key + '" value="' + escapeAttr(val) + '"'
         + ' class="grid-input w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs"></td>';
     });
 
@@ -3157,7 +3176,7 @@ async function loadSubmissionIntoAdminGrid(reportId) {
       + '<option value="fail"' + (item.item_result === 'fail' ? ' selected' : '') + '>⚠️ ตกเกณฑ์ (Fail)</option>'
       + '</select></td>';
 
-    row += '<td class="p-2.5"><input type="text" data-field="remarks" value="' + (item.remarks || item.notes || '') + '"'
+    row += '<td class="p-2.5"><input type="text" data-field="remarks" value="' + escapeAttr(item.remarks || item.notes) + '"'
       + ' placeholder="หมายเหตุ" class="grid-input w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs"></td>';
 
     return row + '</tr>';
@@ -3581,8 +3600,8 @@ function canManageBooking(b) {
   return isRecordInUserScope(b, currentLoggedUser);
 }
 
-const escBk = (v) => String(v == null ? '' : v)
-  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+// ใช้ตัวเดียวกับทั้งไฟล์ — เดิมเป็นฟังก์ชันซ้ำที่ไม่ได้ escape เครื่องหมาย >
+const escBk = escapeAttr;
 
 const BK_FIELD = 'w-full px-3 py-2.5 bg-white border border-slate-300 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-[#6c5070] focus:outline-hidden';
 const bkRow = (label, inner) =>
@@ -3615,7 +3634,7 @@ async function webEditBooking(id) {
       bkRow('หน่วยงานส่งตรวจ', '<input id="wb-dept" value="' + escBk(b.department) + '" class="' + BK_FIELD + '">') +
       bkRow('ชื่อ-สกุล ผู้ส่งตรวจ', '<input id="wb-sender" value="' + escBk(b.sender_name) + '" class="' + BK_FIELD + '">') +
       bkRow('เบอร์โทรศัพท์ติดต่อ', '<input id="wb-contact" value="' + escBk(b.contact_number) + '" class="' + BK_FIELD + '">') +
-      bkRow('จำนวนตัวอย่าง', '<input id="wb-count" type="number" min="1" max="60" value="' + (b.sample_count || 1) + '" class="' + BK_FIELD + '">') +
+      bkRow('จำนวนตัวอย่าง', '<input id="wb-count" type="number" min="1" max="60" value="' + escapeAttr(b.sample_count || 1) + '" class="' + BK_FIELD + '">') +
       bkRow('หมายเหตุ', '<input id="wb-notes" value="' + escBk(b.notes) + '" class="' + BK_FIELD + '">'),
     showCancelButton: true, confirmButtonText: 'บันทึกการแก้ไข', cancelButtonText: 'ปิด',
     confirmButtonColor: '#6c5070', cancelButtonColor: '#94a3b8',
